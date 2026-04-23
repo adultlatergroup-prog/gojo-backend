@@ -1,8 +1,11 @@
 /**
  * GoJo Fare Engine (Version: Step Pricing)
  * ระบบคำนวณค่าโดยสารและตรวจสอบโปรโมชั่น
- * มาตรฐาน: รองรับเกณฑ์ราคาขั้นบันได, ราคาขั้นต่ำ 100 บาท และเงื่อนไขคูปอง
+ * มาตรฐาน: รองรับเกณฑ์ราคาขั้นบันได, เงื่อนไขคูปอง
  */
+
+ const admin = require('firebase-admin'); 
+ const db = admin.firestore();   
 
 // --- 1. Pricing Configuration (ส่วนตั้งค่าราคา) ---
 const PRICING_CONFIG = {
