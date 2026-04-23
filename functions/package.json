@@ -1,0 +1,24 @@
+{
+  "name": "gojo-functions",
+  "version": "1.1.0",
+  "description": "Cloud Functions for GoJo PWA - Ride Hailing Service",
+  "main": "index.js",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.0",
+    "i18next": "^23.11.5",
+    "i18next-fs-backend": "^2.3.2"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.1.0"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "private": true
+}
