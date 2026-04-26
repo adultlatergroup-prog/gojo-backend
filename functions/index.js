@@ -41,9 +41,7 @@ exports.createSecureBooking = functions.region("asia-southeast1").https.onCall(a
 });
 
 // --- 2. ฟังก์ชันตั้งค่า Admin (ใช้งานเฉพาะตอนอัปเกรด User) ---
-// เรียกใช้ผ่าน HTTP URL หรือใน Console เท่านั้น ไม่ต้องรันบ่อย
 exports.setAdminRole = functions.region("asia-southeast1").https.onCall(async (data, context) => {
-    // 🚩 กฎความปลอดภัย: เฉพาะแอดมินเท่านั้นที่จะมีสิทธิ์อัปเกรดคนอื่น
     if (!context.auth || context.auth.token.admin !== true) {
         throw new functions.https.HttpsError("permission-denied", "คุณไม่มีสิทธิ์ใช้งานฟังก์ชันนี้");
     }
@@ -56,3 +54,31 @@ exports.setAdminRole = functions.region("asia-southeast1").https.onCall(async (d
         throw new functions.https.HttpsError("internal", error.message);
     }
 });
+
+// --- 3. ฟังก์ชันยกเลิกงานอัตโนมัติ (Scheduled Task) ---
+exports.scheduledAutoCancelJobs = functions.region("asia-southeast1").pubsub
+    .schedule('every 1 minutes') // รันทุก 1 นาที เพื่อเช็คงาน
+    .onRun(async (context) => {
+        const now = admin.firestore.Timestamp.now();
+        const twoMinutesAgo = new Date(now.toDate().getTime() - 2 * 60 * 1000);
+
+        // ค้นหางานที่ค้างเกิน 2 นาที และสถานะยังเป็น 'pending'
+        const snapshot = await admin.firestore().collection('jobs')
+            .where('status', '==', 'pending')
+            .where('createdAt', '<', admin.firestore.Timestamp.fromDate(twoMinutesAgo))
+            .get();
+
+        if (snapshot.empty) return null;
+
+        // ทำการยกเลิกงานที่ค้าง
+        const batch = admin.firestore().batch();
+        snapshot.docs.forEach(doc => {
+            batch.update(doc.ref, { 
+                status: 'cancelled', 
+                cancelReason: 'timeout_no_driver_auto' 
+            });
+        });
+
+        await batch.commit();
+        console.log(`🧹 ยกเลิกงานค้างไปแล้ว ${snapshot.size} งาน`);
+    });
